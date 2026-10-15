@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智学 · 自适应刷题系统</title>
+<style>
+:root{
+  --bg:#0f1729; --panel:#182236; --panel2:#1e2a42; --line:#2c3a56;
+  --txt:#e8edf7; --sub:#94a3c4; --accent:#4f9cf9; --accent2:#7c5cff;
+  --ok:#2ecc71; --bad:#ff5d6c; --warn:#ffb445; --gold:#ffc93c;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{max-width:100%;overflow-x:hidden}
+body{
+  font-family:"Microsoft YaHei","PingFang SC","Segoe UI",sans-serif;
+  background:radial-gradient(1200px 700px at 20% -10%,#1b2a4a 0%,var(--bg) 55%) fixed;
+  color:var(--txt);min-height:100vh;line-height:1.65;-webkit-text-size-adjust:100%;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:22px 20px 60px;width:100%;overflow-x:hidden}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;color:#fff;box-shadow:0 8px 22px rgba(79,156,249,.35)}
+.brand h1{font-size:19px;font-weight:700;letter-spacing:.5px}
+.brand p{font-size:12px;color:var(--sub);margin-top:1px}
+.tabs{display:flex;gap:6px;background:var(--panel);padding:6px;border-radius:12px;border:1px solid var(--line);
+  max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:8px 16px;border-radius:8px;font-size:14px;cursor:pointer;color:var(--sub);border:none;background:none;transition:.18s;white-space:nowrap;flex:0 0 auto}
+.tab:hover{color:var(--txt);background:var(--panel2)}
+.tab.on{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:600}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:18px}
+.card h2{font-size:16px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.card h2 .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+.card .hint{font-size:12.5px;color:var(--sub);margin-bottom:14px}
+textarea,input[type=text],input[type=number],select{
+  width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;color:var(--txt);
+  padding:11px 13px;font-size:13.5px;font-family:inherit;outline:none;transition:.18s
+}
+textarea{min-height:190px;resize:vertical;line-height:1.7;font-family:Consolas,"Courier New",monospace;font-size:12.5px}
+textarea:focus,input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,156,249,.15)}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:10px;border:none;cursor:pointer;
+  font-size:13.5px;font-weight:600;font-family:inherit;transition:.18s;background:var(--panel2);color:var(--txt);border:1px solid var(--line)}
+.btn:hover{transform:translateY(-1px);border-color:var(--accent)}
+.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;box-shadow:0 6px 18px rgba(79,156,249,.3)}
+.btn.ghost{background:transparent}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.grow{flex:1}
+.pill{font-size:11.5px;padding:3px 10px;border-radius:20px;background:var(--panel2);border:1px solid var(--line);color:var(--sub)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+.stat .v{font-size:22px;font-weight:800;letter-spacing:.5px}
+.stat .k{font-size:11.5px;color:var(--sub);margin-top:2px}
+/* quiz */
+.qmeta{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+.progress{height:6px;background:var(--bg);border-radius:4px;overflow:hidden;margin-bottom:18px;border:1px solid var(--line)}
+.progress .bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;transition:.3s}
+.qtype{font-size:11.5px;padding:3px 10px;border-radius:20px;background:rgba(79,156,249,.15);color:var(--accent);border:1px solid rgba(79,156,249,.35);font-weight:600}
+.qtype.multi{background:rgba(124,92,255,.15);color:#a48cff;border-color:rgba(124,92,255,.35)}
+.qtype.judge{background:rgba(255,180,69,.15);color:var(--warn);border-color:rgba(255,180,69,.35)}
+.qstem{font-size:16.5px;font-weight:600;line-height:1.75;margin:6px 0 18px}
+.opt{display:flex;align-items:flex-start;gap:12px;padding:13px 15px;border:1.5px solid var(--line);border-radius:11px;
+  margin-bottom:10px;cursor:pointer;transition:.16s;background:var(--bg)}
+.opt:hover{border-color:var(--accent);background:var(--panel2)}
+.opt .key{width:26px;height:26px;flex:0 0 26px;border-radius:50%;background:var(--panel2);border:1.5px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;transition:.16s}
+.opt .txt{flex:1;font-size:14px;padding-top:1px}
+.opt.sel{border-color:var(--accent);background:rgba(79,156,249,.1)}
+.opt.sel .key{background:var(--accent);color:#fff;border-color:var(--accent)}
+.opt.right{border-color:var(--ok);background:rgba(46,204,113,.1)}
+.opt.right .key{background:var(--ok);color:#fff;border-color:var(--ok)}
+.opt.wrong{border-color:var(--bad);background:rgba(255,93,108,.1)}
+.opt.wrong .key{background:var(--bad);color:#fff;border-color:var(--bad)}
+.opt.locked{cursor:default}
+.feedback{padding:13px 15px;border-radius:10px;font-size:13.5px;margin-top:6px;line-height:1.75;display:none}
+.feedback.show{display:block}
+.feedback.ok{background:rgba(46,204,113,.12);border:1px solid rgba(46,204,113,.4)}
+.feedback.bad{background:rgba(255,93,108,.12);border:1px solid rgba(255,93,108,.4)}
+.feedback b{color:var(--gold)}
+/* table */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line)}
+th{color:var(--sub);font-weight:600;font-size:12px;background:var(--panel2)}
+tr:hover td{background:rgba(79,156,249,.05)}
+.mastery{height:7px;background:var(--bg);border-radius:4px;overflow:hidden;min-width:80px}
+.mastery .f{height:100%;border-radius:4px;transition:.4s}
+tfoot td{background:var(--panel2);font-weight:700;color:var(--gold)}
+.empty{text-align:center;padding:40px 20px;color:var(--sub);font-size:13.5px}
+.empty .big{font-size:34px;margin-bottom:10px;opacity:.5}
+.pane{display:none}
+.pane.on{display:block}
+.wrongitem{border:1px solid var(--line);border-radius:12px;padding:15px;margin-bottom:12px;background:var(--bg)}
+.wrongitem .wi-head{display:flex;justify-content:space-between;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.wrongitem .wi-stem{font-size:14px;font-weight:600;margin-bottom:10px;line-height:1.7}
+.wrongitem .wi-line{font-size:13px;padding:5px 0;display:flex;gap:8px;align-items:flex-start}
+.tag{font-size:11px;padding:2px 8px;border-radius:6px;font-weight:600}
+.tag.bad{background:rgba(255,93,108,.16);color:var(--bad)}
+.tag.ok{background:rgba(46,204,113,.16);color:var(--ok)}
+.tag.warn{background:rgba(255,180,69,.16);color:var(--warn)}
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--panel2);
+  border:1px solid var(--accent);color:var(--txt);padding:12px 22px;border-radius:11px;font-size:13.5px;
+  box-shadow:0 10px 30px rgba(0,0,0,.5);opacity:0;transition:.3s;z-index:99;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.acc{border:1px solid var(--line);border-radius:11px;margin-bottom:10px;overflow:hidden;background:var(--bg)}
+.acc button{width:100%;text-align:left;padding:13px 16px;background:none;border:none;color:var(--txt);
+  font-size:14px;font-weight:600;cursor:pointer;display:flex;justify-content:space-between;font-family:inherit}
+.acc .body{padding:0 16px 14px;font-size:13px;color:var(--sub);line-height:1.8;display:none}
+.acc.open .body{display:block}
+.acc .body code{background:var(--panel2);padding:1px 6px;border-radius:5px;color:var(--accent);font-size:12px}
+@media(max-width:720px){
+  .wrap{padding:14px 12px 50px}
+  .grid4{grid-template-columns:repeat(2,1fr)}
+  .grid3{grid-template-columns:1fr}
+  .card{padding:16px;border-radius:14px}
+  .qstem{font-size:15.5px}
+  .stat .v{font-size:19px}
+  .brand h1{font-size:16px}
+  .brand p{font-size:11px}
+  .logo{width:38px;height:38px;font-size:18px;border-radius:10px}
+  header.top{gap:10px;margin-bottom:14px}
+  .tabs{width:100%}
+  .btn{padding:9px 15px;font-size:13px}
+  table{font-size:12px}
+  th,td{padding:8px 8px}
+  .opt{padding:11px 12px;gap:10px}
+  .opt .txt{font-size:13.5px}
+  textarea{min-height:150px;font-size:12px}
+}
+@media(max-width:400px){
+  .wrap{padding:10px 9px 44px}
+  .tab{padding:7px 12px;font-size:13px}
+  .qstem{font-size:15px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo">智</div>
+      <div>
+        <h1>智学 · 自适应刷题系统</h1>
+        <p>基于遗忘曲线的错题加权复习引擎</p>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button class="tab on" data-pane="prac">刷题</button>
+      <button class="tab" data-pane="bank">题库</button>
+      <button class="tab" data-pane="wrong">错题本</button>
+      <button class="tab" data-pane="report">学习报告</button>
+      <button class="tab" data-pane="about">关于</button>
+    </nav>
+  </header>
+
+  <!-- ========== 刷题 ========== -->
+  <div class="pane on" id="pane-prac">
+    <div class="card" id="setup">
+      <h2><span class="dot"></span>开始练习</h2>
+      <div class="hint">选择题型和模式，系统会按你的掌握度智能抽题。</div>
+      <div class="grid4" style="margin-bottom:14px">
+        <div><label class="hint" style="display:block;margin-bottom:6px">题库</label>
+          <select id="cfgBank"><option value="all">全部题库</option></select></div>
+        <div><label class="hint" style="display:block;margin-bottom:6px">题型</label>
+          <select id="cfgType"><option value="all">全部题型</option><option value="single">单选题</option><option value="multi">多选题</option><option value="judge">判断题</option></select></div>
+        <div><label class="hint" style="display:block;margin-bottom:6px">模式</label>
+          <select id="cfgMode">
+            <option value="smart">智能模式（错题优先）</option>
+            <option value="seq">顺序练习</option>
+            <option value="rand">随机练习</option>
+            <option value="test">模拟测试（自动组卷）</option>
+          </select></div>
+        <div><label class="hint" style="display:block;margin-bottom:6px">题量</label>
+          <select id="cfgCount"><option value="10">10 题</option><option value="15">15 题</option><option value="20" selected>20 题</option><option value="30">30 题</option><option value="50">50 题</option><option value="0">全部</option></select></div>
+      </div>
+      <div class="row">
+        <button class="btn primary" onclick="startQuiz()">▶ 开始练习</button>
+        <span class="pill" id="bankInfo">题库加载中…</span>
+      </div>
+    </div>
+
+    <div class="card" id="quizCard" style="display:none">
+      <div class="qmeta">
+        <div style="display:flex;gap:10px;align-items:center">
+          <span class="qtype" id="qType">单选题</span>
+          <span class="pill" id="qPos">1 / 20</span>
+          <span class="pill" id="qSource"></span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <span class="pill" id="qScore">正确 0</span>
+          <button class="btn ghost" style="padding:5px 12px;font-size:12px" onclick="quitQuiz()">退出</button>
+        </div>
+      </div>
+      <div class="progress"><div class="bar" id="qBar"></div></div>
+      <div class="qstem" id="qStem"></div>
+      <div id="qOpts"></div>
+      <div class="feedback" id="qFb"></div>
+      <div class="row" id="qActions" style="justify-content:flex-end">
+        <button class="btn ghost" id="btnDontKnow" onclick="markDontKnow()" style="border-color:var(--warn);color:var(--warn)">🤔 不会</button>
+        <button class="btn ghost" id="btnSkip" onclick="skipQ()">跳过</button>
+        <button class="btn primary" id="btnSubmit" onclick="submitQ()">提交答案</button>
+        <button class="btn primary" id="btnNext" onclick="nextQ()" style="display:none">下一题 →</button>
+      </div>
+    </div>
+
+    <div class="card" id="resultCard" style="display:none">
+      <h2><span class="dot"></span>本次练习结果</h2>
+      <div class="grid4" style="margin:16px 0">
+        <div class="stat"><div class="v" id="rTotal">0</div><div class="k">总题数</div></div>
+        <div class="stat"><div class="v" id="rRight" style="color:var(--ok)">0</div><div class="k">答对</div></div>
+        <div class="stat"><div class="v" id="rWrong" style="color:var(--bad)">0</div><div class="k">答错</div></div>
+        <div class="stat"><div class="v" id="rRate" style="color:var(--gold)">0%</div><div class="k">正确率</div></div>
+      </div>
+      <div id="rExtra" class="hint" style="display:none;margin-bottom:12px;color:var(--warn)"></div>
+      <div class="row">
+        <button class="btn primary" onclick="location.reload()">再来一轮</button>
+        <button class="btn" onclick="gotoPane('wrong')">看错题本</button>
+        <button class="btn" onclick="gotoPane('report')">看学习报告</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 题库 ========== -->
+  <div class="pane" id="pane-bank">
+    <div class="card">
+      <h2><span class="dot"></span>导入题库</h2>
+      <div class="hint"><b style="color:var(--accent)">直接把题目粘贴进来即可</b>，系统会自动识别格式：<br>
+      ✅ <b>学习通 / 考试系统导出的原格式</b>（题干、A.选项、我的答案…直接粘，不用改）<br>
+      ✅ 每行一题：<code>题干|选项A|选项B|选项C|选项D|正确答案|知识点</code>（判断题：<code>题干|对|错|A|知识点</code>，多选答案写 <code>ACD</code>）<br>
+      ✅ JSON 格式。<br>
+      <b style="color:var(--accent)">导入时会问题库名</b>：可新建（如"马原"）或加入已有题库（如"形策"）。</div>
+      <textarea id="bankInput" placeholder="学习通里的题目直接粘这里就行，例如：
+1. (单选题)新文化运动开始的标志是(  )
+A. 戊戌变法
+B. 辛亥革命
+C. 新文化运动
+D. 五四运动
+我的答案:C;正确答案:C;
+
+（也支持一行一题的简写格式：
+新文化运动开始的标志是|戊戌变法|辛亥革命|新文化运动|五四运动|C|近代史）"></textarea>
+      <div class="row">
+        <button class="btn primary" onclick="importBank()">导入题库</button>
+        <button class="btn" onclick="loadDemo()">载入演示题库</button>
+        <button class="btn ghost" onclick="exportBank()">导出为JSON</button>
+        <label class="pill" style="cursor:pointer">从文件导入<input type="file" id="fileInput" accept=".txt,.json,.csv" style="display:none" onchange="importFile(event)"></label>
+      </div>
+    </div>
+    <div class="card">
+      <h2><span class="dot"></span>当前题库</h2>
+      <div class="hint" id="bankSummary">暂无题目</div>
+      <div style="overflow-x:auto"><table id="bankTable"><thead><tr><th>#</th><th>题型</th><th>题干</th><th>答案</th><th>知识点</th><th>操作</th></tr></thead><tbody></tbody></table></div>
+      <div class="row"><button class="btn" style="border-color:var(--bad);color:var(--bad)" onclick="clearBank()">清空题库</button></div>
+    </div>
+  </div>
+
+  <!-- ========== 错题本 ========== -->
+  <div class="pane" id="pane-wrong">
+    <div class="card">
+      <h2><span class="dot"></span>错题本</h2>
+      <div class="hint" id="wrongSummary">暂无错题</div>
+      <div class="row" style="margin-bottom:14px">
+        <button class="btn primary" onclick="startWrongQuiz()">🔁 重刷全部错题</button>
+        <button class="btn" onclick="clearWrong()">清空错题本</button>
+      </div>
+      <div id="wrongList"></div>
+    </div>
+  </div>
+
+  <!-- ========== 学习报告 ========== -->
+  <div class="pane" id="pane-report">
+    <div class="card">
+      <h2><span class="dot"></span>学习概览</h2>
+      <div class="grid4" style="margin:14px 0">
+        <div class="stat"><div class="v" id="sTotal">0</div><div class="k">累计答题</div></div>
+        <div class="stat"><div class="v" id="sRate" style="color:var(--ok)">0%</div><div class="k">总体正确率</div></div>
+        <div class="stat"><div class="v" id="sDays" style="color:var(--accent)">0</div><div class="k">练习天数</div></div>
+        <div class="stat"><div class="v" id="sWeak" style="color:var(--bad)">—</div><div class="k">最薄弱知识点</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2><span class="dot"></span>知识点掌握度</h2>
+      <div class="hint">掌握度 = 该知识点加权正确率。低于 60% 自动标为薄弱，智能模式会优先推送。</div>
+      <div style="overflow-x:auto"><table id="kpTable"><thead><tr><th>知识点</th><th>答题数</th><th>正确</th><th>正确率</th><th>掌握度</th><th>状态</th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div class="card">
+      <h2><span class="dot"></span>练习记录</h2>
+      <div style="overflow-x:auto"><table id="histTable"><thead><tr><th>时间</th><th>模式</th><th>题量</th><th>正确率</th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- ========== 关于 ========== -->
+  <div class="pane" id="pane-about">
+    <div class="card">
+      <h2><span class="dot"></span>关于本系统</h2>
+      <div class="hint">智学 · 自适应刷题系统 — 面向高校学生的轻量化自适应复习引擎。纯前端实现，单文件运行，数据保存在本机浏览器。</div>
+      <div class="acc open"><button onclick="this.parentNode.classList.toggle('open')">核心机制一：差异化遗忘曲线加权 <span>▾</span></button>
+        <div class="body">系统为每道题维护一个"掌握度"分数。答错后掌握度下降，并按记忆规律安排复习。与普通遗忘曲线工具不同的是，本系统做了三点改良：<br>
+        <b>①</b> 题型难度分档——判断题记忆负担小、间隔短；多选/长题干概念题负担重、间隔长；<br>
+        <b>②</b> 动态稳定度——复习间隔不是写死的（20分/1天/2天…），而是根据每题答对/答错动态伸缩；<br>
+        <b>③</b> 知识点连带激活——同一知识点的题"一错牵连一串"，带动关联复习。<br>
+        智能模式据此计算每道题的<b>抽取权重</b>，优先推送"最该复习的题"，而不是平均随机。</div></div>
+      <div class="acc"><button onclick="this.parentNode.classList.toggle('open')">核心机制二：知识点掌握度画像 <span>▾</span></button>
+        <div class="body">每题可标注所属知识点。系统按知识点聚合答题数据，算出加权正确率作为掌握度，用进度条可视化，并自动标记薄弱知识点，让复习有的放矢。</div></div>
+      <div class="acc"><button onclick="this.parentNode.classList.toggle('open')">核心机制三：自动组卷 <span>▾</span></button>
+        <div class="body">模拟测试模式按知识点分布与掌握度自动抽题组卷，尽量做到覆盖全面、难易合理，模拟真实考试。</div></div>
+      <div class="acc"><button onclick="this.parentNode.classList.toggle('open')">题库分类管理 <span>▾</span></button>
+        <div class="body">导入题目时可以给题库命名（如"马原""形策"），不同科目的题分开存放、分开练习，不会混在一起。刷题时可选择练某个题库或全部题库。已命名的题库可以整组删除。</div></div>
+      <div class="acc"><button onclick="this.parentNode.classList.toggle('open')">选项乱序防背位置 <span>▾</span></button>
+        <div class="body">每次出题时，选择题的选项顺序都会重新打乱（判断题的"对/错"保持不变）。这样即使你记住了"答案在第 C 个"，下次顺序变了也无法蒙对，必须真正记住知识点内容。</div></div>
+      <div class="acc"><button onclick="this.parentNode.classList.toggle('open')">断点续做（不怕中途退出） <span>▾</span></button>
+        <div class="body">练习过程中会实时记住你的进度。如果不小心关掉了页面，下次打开时会弹窗问要不要继续上次的练习：选"继续"就回到退出时那道题（连选项顺序都不变），选"重新开始"就回到首页重新选题库和模式。一轮练习做完后，进度自动清零。</div></div>
+      <div class="acc"><button onclick="this.parentNode.classList.toggle('open')">"不会"与"蒙的"——诚实记录掌握度 <span>▾</span></button>
+        <div class="body">遇到不会的题，可以点"🤔 不会"按钮直接看答案（按答错处理，进错题本）。如果蒙对了，答对界面有"其实我是蒙的"按钮——点它就按错题处理。因为蒙对并不代表真的掌握，诚实标记后系统会重点复习这些题，避免"假掌握"。</div></div>
+      <div class="acc"><button onclick="this.parentNode.classList.toggle('open')">题库分享（多人使用） <span>▾</span></button>
+        <div class="body">导出的题库文件（JSON）可以直接发给同学，同学导入就能用。同一份系统文件发给多个同学，各自在电脑/手机上打开，各自的数据互不干扰——适合一个班共用一套题库。注意：分享的是<b>题目</b>，各自的答题记录仍在各自设备上。</div></div>
+      <div class="acc"><button onclick="this.parentNode.classList.toggle('open')">自动去重（不会重复导入） <span>▾</span></button>
+        <div class="body">同一个题库内，如果导入的题目<b>题干、选项、答案都相同</b>（选项先后顺序不同也算相同），会自动跳过、不会重复收录，并提示"跳过 N 道重复题"。这样同一个题库反复导入也不会翻倍。注意：只在<b>同一题库内</b>查重，不同题库（如马原、形策）之间互不影响。</div></div>
+      <div class="acc"><button onclick="this.parentNode.classList.toggle('open')">数据存储说明 <span>▾</span></button>
+        <div class="body">所有数据（题库、答题记录、错题、掌握度）保存在浏览器 localStorage 中，不上传服务器，隐私安全。导出 JSON 即可备份或分享题库。</div></div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+/* ============================================================
+   智学 · 自适应刷题系统  app.js
+   核心：遗忘曲线错题加权 + 知识点掌握度画像 + 自动组卷
+   纯前端实现，数据存 localStorage
+   ============================================================ */
+"use strict";
+
+/* ---------- 存储层 ---------- */
+const DB = {
+  bank:  [],   // [{id, type, stem, opts:[..], answer:[idx], kp, src, bank}]
+  stat:  {},   // {qid: {right, wrong, mastery, lastWrongTs, streak}}
+  wrong: [],   // [qid]  当前仍在错题本中的
+  hist:  [],   // [{ts, mode, total, right}]
+  days:  {},   // {yyyy-mm-dd: true}
+};
+const DEFAULT_BANK = "默认题库";   // 老数据 / 未命名题库统一归到这里
+
+function save(){
+  try{
+    localStorage.setItem("zhixue_bank", JSON.stringify(DB.bank));
+    localStorage.setItem("zhixue_stat", JSON.stringify(DB.stat));
+    localStorage.setItem("zhixue_wrong", JSON.stringify(DB.wrong));
+    localStorage.setItem("zhixue_hist", JSON.stringify(DB.hist));
+    localStorage.setItem("zhixue_days", JSON.stringify(DB.days));
+  }catch(e){ toast("存储空间不足，导入的题库可能过大"); }
+}
+function load(){
+  const g = (k, d) => { try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } };
+  DB.bank  = g("zhixue_bank", []);
+  DB.stat  = g("zhixue_stat", {});
+  DB.wrong = g("zhixue_wrong", []);
+  DB.hist  = g("zhixue_hist", []);
+  DB.days  = g("zhixue_days", {});
+  // 老数据兼容：没有 bank 字段的题归入默认题库
+  DB.bank.forEach(q => { if(!q.bank) q.bank = DEFAULT_BANK; });
+}
+
+/* 全部题库名（去重，保持出现顺序，默认题库排最前） */
+function allBanks(){
+  const seen = [], list = [];
+  DB.bank.forEach(q => { const b = q.bank || DEFAULT_BANK; if(!seen.includes(b)){ seen.push(b); list.push(b); } });
+  list.sort((a, b) => (a === DEFAULT_BANK ? -1 : b === DEFAULT_BANK ? 1 : 0));
+  return list;
+}
+
+/* ---------- 工具 ---------- */
+const $  = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const LETTERS = ["A","B","C","D","E","F","G","H"];
+const TYPE_NAME = {single:"单选题", multi:"多选题", judge:"判断题"};
+
+let toastTimer = null;
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove("show"), 2200);
+}
+function todayKey(){ const d = new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+
+/* ============================================================
+   一、题库解析
+   自动识别三种粘贴格式：
+   ① 定界符文本：题干|选项A|选项B|...|正确答案|知识点   （每行一题）
+       判断题：题干|对|错|A|知识点   多选：正确答案写 ACD
+   ② 学习通/考试系统导出的多行格式：
+       1. (单选题)题干……
+       A. 选项甲
+       B. 选项乙
+       我的答案:B:乙;正确答案:B:乙;
+   ③ JSON：[{stem, opts, answer, kp, type}] 或 {questions:[...]}
+   ============================================================ */
+function parseBank(text, bankName){
+  text = text.trim();
+  if(!text) return [];
+  const BN = bankName || DEFAULT_BANK;
+  // JSON 分支
+  if(text[0] === "[" || text[0] === "{"){
+    try{
+      let obj = JSON.parse(text);
+      let arr = Array.isArray(obj) ? obj : (obj.questions || obj.bank || []);
+      return arr.map(o => normalizeJSON(o, BN)).filter(Boolean);
+    }catch(e){ throw new Error("JSON 格式错误：" + e.message); }
+  }
+  // 学习通格式自动识别：出现"(单选题)"/"(多选题)"/"(判断题)"题号行，或"我的答案"行
+  if(/[（(](单选题|多选题|判断题)[)）]/.test(text) || /我的答案\s*[:：]/.test(text)){
+    return parseStudyBank(text, BN);
+  }
+  // 定界符分支：自动识别 | 或 ｜ 或 Tab
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const out = [];
+  const errs = [];
+  lines.forEach((line, i) => {
+    let parts = line.split(/\s*[|｜\t]\s*/);
+    if(parts.length < 3){ errs.push(i+1); return; }
+    const stem = parts[0];
+    // 找答案列：从后往前找形如 [A-H]+ 的列
+    let ansIdx = -1;
+    for(let j = parts.length - 1; j >= 1; j--){
+      if(/^[A-Ha-h]+$/.test(parts[j]) && parts[j].toUpperCase().split("").every(c => LETTERS.includes(c))){ ansIdx = j; break; }
+    }
+    if(ansIdx < 0){ errs.push(i+1); return; }
+    const ansLetters = parts[ansIdx].toUpperCase().split("");
+    const opts = parts.slice(1, ansIdx);
+    if(opts.length < 2){ errs.push(i+1); return; }
+    if(ansLetters.some(l => LETTERS.indexOf(l) >= opts.length)){ errs.push(i+1); return; }
+    const kp = parts[ansIdx+1] || "未分类";
+    const src = parts[ansIdx+2] || "";
+    let type = opts.length === 2 && /^(对|错|正确|错误|真|假|T|F)$/.test(opts[0]) ? "judge"
+             : (ansLetters.length > 1 ? "multi" : "single");
+    out.push({
+      id: "q" + Date.now().toString(36) + Math.random().toString(36).slice(2,7),
+      type, stem, opts,
+      answer: ansLetters.map(l => LETTERS.indexOf(l)),
+      kp, src, bank: BN
+    });
+  });
+  if(errs.length) toast("第 " + errs.slice(0,5).join("、") + (errs.length>5?" 等":"") + " 行格式有误，已跳过");
+  return out;
+}
+
+/* ------------------------------------------------------------
+   学习通 / 考试系统「多行格式」解析器
+   题目结构：题号行 → 选项行(可多行、可一行多个) → 答案行(我的答案/正确答案)
+   兼容：单选/多选/判断；选项 A. / A、/ A．；答案 "B:文本;" / "对" / "ABC"
+   ------------------------------------------------------------ */
+function parseStudyBank(text, BN){
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const out = [];
+  let cues = [];   // 按顺序收集 [字母, 文本]
+
+  const finish = () => {
+    if(!cues.length){ cues = []; return; }
+    const opts = cues.map(c => c.text);
+    if(opts.length >= 2 && ansLetters.length){
+      if(isJudge){
+        out.push({ id: qid(), type:"judge", stem: stem.trim(), opts:["对","错"],
+                   answer:[ ansLetters[0] === "A" ? 0 : 1 ], kp:"未分类", src:"", bank: BN });
+      }else{
+        const ansIdx = ansLetters.map(l => LETTERS.indexOf(l)).filter(n => n >= 0 && n < opts.length);
+        if(ansIdx.length){
+          out.push({ id: qid(), type: ansIdx.length > 1 ? "multi" : "single",
+                     stem: stem.trim(), opts, answer: ansIdx, kp:"未分类", src:"", bank: BN });
+        }
+      }
+    }
+    cues = []; stem = ""; ansLetters = []; isJudge = false;
+  };
+
+  let stem = "", ansLetters = [], isJudge = false;
+
+  lines.forEach(s => {
+    // —— 噪声行：跳过
+    if(/^答案解析/.test(s) || s === "AI讲解" || s === "解析") return;
+    if(/^[\d.]+分$/.test(s)) return;
+    if(/^[一二三四五六七八九十]+\s*[.、]/.test(s)) return;              // 一. 单选题（共20题，50分）
+    if(/^[（(]共\s*\d+\s*题/.test(s)) return;
+
+    // —— 答案行（含"正确答案"或"我的答案"）：题干已收，提取答案字母
+    if(/正确答案\s*[:：]/.test(s) || /我的答案\s*[:：]/.test(s)){
+      let mt = s.match(/正确答案\s*[:：]\s*([对错正确错误])/);
+      if(mt && isJudge){ ansLetters = [ (mt[1] === "对" || mt[1] === "正确") ? "A" : "B" ]; finish(); return; }
+      let ma = s.match(/正确答案\s*[:：]\s*([A-Ha-h]+)/) || s.match(/我的答案\s*[:：]\s*([A-Ha-h]+)/);
+      if(ma){ ansLetters = ma[1].toUpperCase().split(""); finish(); }
+      return;
+    }
+
+    // —— 题号行： 1. xxx / 1.(单选题)xxx / 1、xxx
+    let m = s.match(/^\d+\s*[.、．]\s*[（(]?(单选题|多选题|判断题|单选|多选|判断)?[)）]?\s*(.+)$/);
+    if(m){
+      finish();                                   // 上一题收尾
+      isJudge = /判断/.test(m[1] || "");
+      if(/多选/.test(m[1] || "")) isJudge = false;
+      stem = m[2].trim();
+      return;
+    }
+
+    // —— 选项行：一行一个 或 一行多个 "A. 甲 B. 乙 C. 丙"
+    const optRe = /([A-Ha-h])\s*[.．、]\s*/g;
+    let mm, segs = [];
+    while((mm = optRe.exec(s)) !== null){
+      segs.push({ letter: mm[1].toUpperCase(), from: mm.index + mm[0].length });
+    }
+    if(segs.length){
+      // 行首必须是 A. 或紧接着上一个字母（避免题干里的 "(        )" 被误判）
+      if(segs[0].letter === "A" || cues.length){
+        for(let i = 0; i < segs.length; i++){
+          const end = (i + 1 < segs.length) ? segs[i+1].from - 2 : s.length;
+          let tx = s.slice(segs[i].from, end).trim().replace(/[;；,，]\s*$/, "").replace(/[：:]\s*正确答案.*$/, "");
+          tx = tx.replace(/^[.．、\s]+/, "").trim();
+          if(tx) cues.push({ letter: segs[i].letter, text: tx });
+        }
+        return;
+      }
+    }
+
+    // —— 题干续行（题干折行）：只有还没收集到选项时才拼接
+    if(cues.length === 0 && stem){ stem += s; return; }
+  });
+  finish();
+  if(!out.length) throw new Error("没能识别出题目，请检查粘贴内容是否为学习通/考试系统的题目");
+  return out;
+}
+function qid(){ return "q" + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function normalizeJSON(o, bankName){
+  if(!o || !o.stem) return null;
+  let opts = o.opts || o.options || [];
+  if(typeof opts === "string") opts = opts.split(/[|｜]/);
+  let ans = o.answer != null ? o.answer : o.ans;
+  let ansArr;
+  if(Array.isArray(ans)){
+    ansArr = ans.map(x => typeof x === "number" ? x : LETTERS.indexOf(String(x).toUpperCase()));
+  }else if(typeof ans === "number"){
+    ansArr = [ans];
+  }else if(typeof ans === "string"){
+    ansArr = /^[A-Ha-h]+$/.test(ans) ? ans.toUpperCase().split("").map(l => LETTERS.indexOf(l))
+           : [parseInt(ans, 10)];
+  }else return null;
+  ansArr = ansArr.filter(n => n >= 0 && n < opts.length);
+  if(!ansArr.length) return null;
+  const type = o.type || (opts.length === 2 && /^(对|错|正确|错误)$/.test(opts[0]) ? "judge" : (ansArr.length > 1 ? "multi" : "single"));
+  return {
+    id: "q" + Date.now().toString(36) + Math.random().toString(36).slice(2,7),
+    type, stem: o.stem, opts, answer: ansArr,
+    kp: o.kp || o.knowledge || o.tag || "未分类", src: o.src || "",
+    bank: bankName || o.bank || DEFAULT_BANK
+  };
+}
+
+/* ============================================================
+   二、自适应引擎（v2 —— 针对思政客观题的差异化复习模型）
+   ------------------------------------------------------------------
+   本引擎不是直接照搬艾宾浩斯 / SM-2，而是在其基础上做了三点改良：
+
+   改良①【题型难度分档】思政客观题里，判断题靠辨析"一句话对错"，
+     记忆负担小；多选/长题干的概念题涉及多个知识点，负担重。
+     → 用难度系数 diff 拉长/缩短复习间隔（判断题 ×0.8，多选 ×1.3）。
+
+   改良②【动态记忆稳定度】不再用写死的"20min/1天/2天…"序列，
+     而是为每题维护一个记忆稳定度 stab（类似 SM-2 的 EF，但按
+     答对/答错动态伸缩），间隔 = 基准窗 × 稳定度 × 难度系数。
+     → 答对则稳定度增加（间隔拉长），答错则收缩（快速重来）。
+
+   改良③【知识点连带激活】思政题按章节成体系（如"马克思主义
+     三大来源"是同一链条）。某题答错时，同知识点其它题的权重
+     适度上调（连带复习），模拟人脑"一错牵连一串"的关联记忆。
+
+   掌握度 mastery ∈ [0,100]
+     · 答对：mastery += (100-mastery) * (0.35 * gainFactor)
+     · 答错：mastery -= mastery * 0.55 + 12
+   抽取权重 = (100 - mastery) × 紧迫系数 × 新题系数 × 连带系数 + 抖动
+   ============================================================ */
+const WINDOW_MIN = [20, 60*24, 60*48, 60*96, 60*168, 60*360];  // 基准复习窗（分钟）
+
+/* 改良①：题型难度系数（思政客观题） */
+function difficultyOf(q){
+  if(q.type === "judge") return 0.8;           // 判断题：记忆负担小，间隔可短
+  if(q.type === "multi") return 1.3;           // 多选：涉及多个知识点，负担重
+  // 单选：题干越长、含概念越多的，视作越难
+  const len = (q.stem || "").length;
+  return len > 40 ? 1.15 : 1.0;
+}
+
+/* 改良②：动态记忆稳定度（替代写死序列） */
+function stabilityOf(s){
+  // stab 初始 1.0；答对逐步增大（间隔拉长），答错急缩（快速重来）
+  return s.stab || 1.0;
+}
+
+function getStat(qid){
+  if(!DB.stat[qid]) DB.stat[qid] = { right:0, wrong:0, mastery:50, stab:1.0, lastWrongTs:0, lastTs:0, wrongStreak:0 };
+  if(DB.stat[qid].stab == null) DB.stat[qid].stab = 1.0;   // 老数据兼容
+  return DB.stat[qid];
+}
+
+/* 改良③：知识点连带激活 —— 同一知识点的题共享"关联紧迫度" */
+function kpPressure(q){
+  const kp = q.kp || "未分类";
+  let worst = 0;
+  DB.bank.forEach(o => {
+    if((o.kp || "未分类") !== kp) return;
+    const os = DB.stat[o.id];
+    if(os && os.wrongStreak > 0) worst = Math.max(worst, os.wrongStreak);
+  });
+  // 同知识点里有题在错题状态 → 连带系数 1.15~1.45（越连着错越强）
+  return worst ? Math.min(1.45, 1.15 + worst * 0.1) : 1.0;
+}
+
+function updateStat(qid, correct){
+  const s = getStat(qid);
+  s.lastTs = Date.now();
+  if(correct){
+    s.right++; s.wrongStreak = 0;
+    s.mastery = s.mastery + (100 - s.mastery) * 0.35;
+    s.stab = Math.min(4.0, (s.stab || 1.0) * 1.6);        // 答对：稳定度增长，间隔拉长
+    const i = DB.wrong.indexOf(qid); if(i >= 0) DB.wrong.splice(i, 1);
+  }else{
+    s.wrong++; s.wrongStreak++;
+    s.mastery = Math.max(0, s.mastery - (s.mastery * 0.55 + 12));
+    s.stab = Math.max(0.3, (s.stab || 1.0) * 0.45);       // 答错：稳定度收缩，快速重来
+    s.lastWrongTs = Date.now();
+    if(DB.wrong.indexOf(qid) < 0) DB.wrong.push(qid);
+  }
+  s.mastery = Math.round(s.mastery);
+}
+/** 该题当前权重：越大越该出 */
+function weightOf(q){
+  const s = getStat(q.id);
+  const weak = 100 - s.mastery;                       // 越薄弱越优先
+  let urgency = 1;
+  if(s.lastWrongTs){
+    // 改良①②：实际应复习间隔 = 基准窗 × 稳定度 × 题型难度
+    const idx = Math.min(s.wrongStreak - 1, WINDOW_MIN.length - 1);
+    const due = WINDOW_MIN[Math.max(0, idx)] * stabilityOf(s) * difficultyOf(q);
+    const passed = (Date.now() - s.lastWrongTs) / 60000;   // 分钟
+    urgency = passed >= due ? 1.6 : 1 + (passed / due) * 0.6; // 到期更急
+  }
+  const novelty = s.right + s.wrong === 0 ? 1.25 : 1;   // 没做过的新题略优先
+  const linked = kpPressure(q);                         // 改良③：知识点连带系数
+  return (weak * urgency * novelty * linked) + Math.random() * 5; // 加抖动避免死板
+}
+function weightedSample(pool, n){
+  const items = pool.slice();
+  const picked = [];
+  while(picked.length < n && items.length){
+    let tot = 0; for(const it of items) tot += it.w;
+    let r = Math.random() * tot, k = 0;
+    for(; k < items.length; k++){ r -= items[k].w; if(r <= 0) break; }
+    if(k >= items.length) k = items.length - 1;
+    picked.push(items.splice(k,1)[0].q);
+  }
+  return picked;
+}
+/** 组卷：按题型配额 + 知识点覆盖 */
+function buildPaper(pool, n){
+  if(n <= 0 || n >= pool.length) return shuffle(pool.slice());
+  const byType = {};
+  pool.forEach(q => (byType[q.type] = byType[q.type] || []).push(q));
+  const paper = [];
+  // 目标配比：单选 50% 多选 25% 判断 25%（按实际存在的题型归一）
+  const exist = Object.keys(byType);
+  const wmap = {single:0.5, multi:0.25, judge:0.25};
+  let tot = 0; exist.forEach(t => tot += wmap[t]);
+  exist.forEach(t => {
+    const quota = Math.round(n * wmap[t] / tot);
+    const cand = byType[t].map(q => ({q, w:weightOf(q)}));
+    paper.push(...weightedSample(cand, Math.min(quota, cand.length)));
+  });
+  if(paper.length < n){
+    const used = new Set(paper.map(q => q.id));
+    const rest = pool.filter(q => !used.has(q.id)).map(q => ({q, w:weightOf(q)}));
+    paper.push(...weightedSample(rest, n - paper.length));
+  }
+  return shuffle(paper.slice(0, n));
+}
+function shuffle(a){ for(let i = a.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+/* ============================================================
+   三、UI —— 题库面板
+   ============================================================ */
+function refreshBankUI(){
+  const tb = $("bankTable").querySelector("tbody");
+  tb.innerHTML = "";
+  const banks = allBanks();
+  $("bankSummary").textContent = DB.bank.length
+    ? `共 ${DB.bank.length} 题　|　${banks.length} 个题库　|　单选题 ${cnt("single")}　多选题 ${cnt("multi")}　判断题 ${cnt("judge")}`
+    : "暂无题目";
+  $("bankInfo").textContent = DB.bank.length ? `题库 ${DB.bank.length} 题` : "题库为空，请先导入";
+  // 按题库分组显示
+  banks.forEach(bn => {
+    const idxs = DB.bank.map((q,i)=>({q,i})).filter(x => (x.q.bank||DEFAULT_BANK) === bn);
+    const head = document.createElement("tr");
+    head.innerHTML = `<td colspan="6" style="background:var(--panel2);font-weight:700;color:var(--accent)">📚 ${esc(bn)}（${idxs.length} 题）
+      <button class="btn ghost" style="padding:2px 10px;font-size:12px;margin-left:10px;float:right" onclick="delBank('${esc(bn).replace(/'/g,"\\'")}')">删除整个题库</button></td>`;
+    tb.appendChild(head);
+    idxs.forEach(({q, i}) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${i+1}</td><td><span class="qtype ${q.type==='multi'?'multi':q.type==='judge'?'judge':''}">${TYPE_NAME[q.type]}</span></td>
+        <td>${esc(q.stem.slice(0,60))}${q.stem.length>60?"…":""}</td>
+        <td style="color:var(--ok);font-weight:600">${q.answer.map(a=>LETTERS[a]).join("")}</td>
+        <td><span class="pill">${esc(q.kp)}</span></td>
+        <td><button class="btn ghost" style="padding:4px 10px;font-size:12px" onclick="delQ(${i})">删除</button></td>`;
+      tb.appendChild(tr);
+    });
+  });
+  refreshBankSelects();
+}
+/* 刷新刷题页的题库下拉 */
+function refreshBankSelects(){
+  const sel = $("cfgBank");
+  if(!sel) return;
+  const cur = sel.value;
+  const banks = allBanks();
+  sel.innerHTML = `<option value="all">全部题库（${DB.bank.length} 题）</option>` +
+    banks.map(b => {
+      const c = DB.bank.filter(q => (q.bank||DEFAULT_BANK) === b).length;
+      return `<option value="${esc(b)}">${esc(b)}（${c} 题）</option>`;
+    }).join("");
+  // 尽量保留原选择
+  if([...sel.options].some(o => o.value === cur)) sel.value = cur;
+}
+function cnt(t){ return DB.bank.filter(q => q.type === t).length; }
+function delQ(i){ DB.bank.splice(i,1); save(); refreshBankUI(); toast("已删除"); }
+function delBank(bn){
+  const n = DB.bank.filter(q => (q.bank||DEFAULT_BANK) === bn).length;
+  if(!confirm(`确定删除整个题库「${bn}」（共 ${n} 题）？（答题记录保留）`)) return;
+  const ids = DB.bank.filter(q => (q.bank||DEFAULT_BANK) === bn).map(q => q.id);
+  DB.bank = DB.bank.filter(q => (q.bank||DEFAULT_BANK) !== bn);
+  DB.wrong = DB.wrong.filter(id => !ids.includes(id));
+  save(); refreshBankUI(); toast(`已删除题库「${bn}」`);
+}
+
+/* 判重指纹：题干相同 + 选项集合相同（忽略顺序）+ 答案指向的选项文本相同 → 视为重复题
+   注意：比较"答案对应的选项文本"而非选项字母，这样即使选项顺序不同也能正确判重。 */
+function qFingerprint(q){
+  const norm = s => String(s || "").replace(/\s+/g, "").trim();   // 去空白
+  const stem = norm(q.stem);
+  const optsSorted = [...q.opts].map(norm).sort();                 // 选项集合（排序后，忽略顺序）
+  const ansTexts = [...q.answer].map(i => norm(q.opts[i])).sort(); // 正确答案对应的选项文本
+  return stem + "\u0001" + optsSorted.join("\u0002") + "\u0003" + ansTexts.join("\u0002");
+}
+
+/* 在指定题库内查重，返回 {unique, dupCount} */
+function dedupeWithinBank(arr, bankName){
+  const existing = new Set(
+    DB.bank.filter(q => (q.bank || DEFAULT_BANK) === bankName).map(qFingerprint)
+  );
+  const seen = new Set();
+  const unique = [];
+  let dup = 0;
+  arr.forEach(q => {
+    const fp = qFingerprint(q);
+    if(existing.has(fp) || seen.has(fp)){ dup++; return; }
+    seen.add(fp);
+    unique.push(q);
+  });
+  return { unique, dupCount: dup };
+}
+
+/* 导入题库：先问"新建"还是"加入已有" */
+function importBank(){
+  const text = $("bankInput").value;
+  if(!text.trim()) return toast("请先粘贴题目内容");
+  const banks = allBanks();
+  let bankName;
+  if(!banks.length){
+    // 没有任何题库：直接建
+    bankName = prompt("给这个题库起个名字（如：马原、形策）：", "");
+    if(bankName === null) return;              // 取消
+    bankName = bankName.trim() || DEFAULT_BANK;
+  }else{
+    // 已有题库：问新建还是加入
+    const existing = banks.join("、");
+    const choice = prompt(
+      "检测到已有题库：" + existing + "\n\n" +
+      "· 输入【新建题库的名字】→ 新建一个题库（如：形策）\n" +
+      "· 输入【已有题库的名字】→ 把题目加进那个题库\n" +
+      "· 留空 → 加入默认题库\n\n" +
+      "请输入：", "");
+    if(choice === null) return;                // 取消
+    bankName = choice.trim() || DEFAULT_BANK;
+    if(banks.includes(bankName) && !confirm(`确认把新题目加入已有题库「${bankName}」？`)) return;
+  }
+  let arr;
+  try{ arr = parseBank(text, bankName); }catch(e){ return toast(e.message); }
+  if(!arr.length) return toast("没有解析出有效题目，请检查格式");
+  // 去重：只在该题库名内查重（题干+选项集合+答案文本 完全相同 → 跳过）
+  const { unique, dupCount } = dedupeWithinBank(arr, bankName);
+  if(!unique.length){
+    $("bankInput").value = "";
+    return toast(`这 ${dupCount} 道题「${bankName}」里都已存在，未重复导入`);
+  }
+  DB.bank = DB.bank.concat(unique);
+  save(); refreshBankUI();
+  $("bankInput").value = "";
+  const dupMsg = dupCount ? `（跳过 ${dupCount} 道重复题）` : "";
+  toast(`已导入 ${unique.length} 题到「${bankName}」${dupMsg}`);
+}
+function importFile(ev){
+  const f = ev.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = e => { $("bankInput").value = e.target.result; toast("文件已读入，点『导入题库』生效"); };
+  r.readAsText(f, "UTF-8");
+  ev.target.value = "";
+}
+function exportBank(){
+  if(!DB.bank.length) return toast("题库为空");
+  const banks = allBanks();
+  let sel;
+  if(banks.length === 1){
+    sel = banks[0];   // 只有一个题库：直接导它，文件名用题库名
+  }else{
+    const inp = prompt(
+      "要导出哪个题库？（导出后可发给同学，他们导入就能用）\n\n" +
+      "· 输入题库名 → 只导出该题库（如：马原）\n" +
+      "· 留空 → 导出全部题库\n\n" +
+      "可选：" + banks.join("、"), "");
+    if(inp === null) return;
+    sel = inp.trim() || "all";
+    if(sel !== "all" && !banks.includes(sel)) return toast("没有这个题库：" + sel);
+  }
+  const data = sel === "all" ? DB.bank : DB.bank.filter(q => (q.bank||DEFAULT_BANK) === sel);
+  if(!data.length) return toast("该题库为空");
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `${sel === "all" ? "全部题库" : sel}_${todayKey()}.json`; a.click();
+  toast(`已导出 ${data.length} 题${sel==="all"?"":"（"+sel+"）"}，可发给同学`);
+}
+function clearBank(){
+  if(!confirm("确定清空全部题库？（答题记录保留）")) return;
+  DB.bank = []; save(); refreshBankUI(); toast("题库已清空");
+}
+function loadDemo(){
+  const name = prompt("演示题库要放进哪个题库名？", "中国近现代史");
+  if(name === null) return;
+  const bn = name.trim() || DEFAULT_BANK;
+  let arr;
+  try{ arr = parseBank(DEMO_BANK, bn); }catch(e){ return toast(e.message); }
+  if(!arr.length) return toast("演示题库解析失败");
+  const { unique, dupCount } = dedupeWithinBank(arr, bn);
+  $("bankInput").value = DEMO_BANK;   // 同时填到输入框，方便学生参考格式
+  if(!unique.length) return toast(`演示题库已在「${bn}」中，未重复导入`);
+  DB.bank = DB.bank.concat(unique);
+  save(); refreshBankUI();
+  toast(`已载入演示题库 ${unique.length} 题到「${bn}」` + (dupCount ? `（跳过 ${dupCount} 道重复）` : ""));
+}
+
+/* ============================================================
+   四、UI —— 练习
+   ============================================================ */
+let quiz = null;   // {list, idx, right, wrong, mode, cur, selected, order, bankSel, typeSel}
+
+/* ---------- 断点续做：未完成的练习进度 ---------- */
+const PROGRESS_KEY = "zhixue_progress";
+function saveProgress(){
+  if(!quiz || !quiz.list || !quiz.list.length){ return; }
+  try{
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify({
+      list: quiz.list.map(q => q.id),   // 只存题号，题库变了也能校验
+      idx:  quiz.idx,
+      right: quiz.right,
+      wrong: quiz.wrong,
+      mode: quiz.mode,
+      order: quiz.order,                // 保存选项顺序 → 原样恢复
+      answered: quiz.answered,
+      selected: quiz.selected,
+      savedAt: Date.now(),
+      bank: quiz.bankSel || "all",
+      type: quiz.typeSel || "all"
+    }));
+  }catch(e){}
+}
+function clearProgress(){ try{ localStorage.removeItem(PROGRESS_KEY); }catch(e){} }
+function readProgress(){
+  try{ const v = localStorage.getItem(PROGRESS_KEY); return v ? JSON.parse(v) : null; }catch(e){ return null; }
+}
+
+function startQuiz(){
+  if(!DB.bank.length) return toast("题库为空，请先导入题目");
+  const type = $("cfgType").value, mode = $("cfgMode").value, n = parseInt($("cfgCount").value, 10);
+  const selBank = $("cfgBank") ? $("cfgBank").value : "all";
+  let pool = DB.bank.filter(q => (type === "all" || q.type === type) && (selBank === "all" || (q.bank || DEFAULT_BANK) === selBank));
+  if(!pool.length) return toast("该题库/题型暂无题目");
+  let list;
+  if(mode === "seq")       list = pool.slice();
+  else if(mode === "rand") list = shuffle(pool.slice());
+  else if(mode === "test") list = buildPaper(pool, n);
+  else                     list = weightedSample(pool.map(q => ({q, w:weightOf(q)})), n || pool.length);
+  if(n > 0 && mode !== "test") list = list.slice(0, n);
+  if(!list.length) return toast("没有可用题目");
+  quiz = {list, idx:0, right:0, wrong:0, mode, cur:null, selected:[], answered:false, order:[], bankSel:selBank, typeSel:type};
+  saveProgress();
+  showQ();
+}
+function startWrongQuiz(){
+  const pool = DB.bank.filter(q => DB.wrong.includes(q.id));
+  if(!pool.length) return toast("错题本是空的，太棒了！");
+  quiz = {list: shuffle(pool.slice()), idx:0, right:0, wrong:0, mode:"wrong", cur:null, selected:[], answered:false, order:[], bankSel:"wrong", typeSel:"all"};
+  saveProgress();
+  gotoPane("prac"); showQ();
+}
+function showQ(){
+  $("setup").style.display = "none";
+  $("resultCard").style.display = "none";
+  $("quizCard").style.display = "block";
+  const q = quiz.list[quiz.idx];
+  quiz.cur = q; quiz.selected = []; quiz.answered = false;
+
+  // 每次出题重新打乱选项顺序（判断题除外），防止"记住位置没记住答案"
+  // order[显示位置] = 原始选项索引
+  if(q.type === "judge"){
+    quiz.order = q.opts.map((_, i) => i);
+  }else{
+    quiz.order = shuffle(q.opts.map((_, i) => i));
+  }
+
+  $("qType").textContent = TYPE_NAME[q.type];
+  $("qType").className = "qtype " + q.type;
+  $("qPos").textContent = (quiz.idx + 1) + " / " + quiz.list.length;
+  $("qSource").textContent = q.kp ? "知识点：" + q.kp : "";
+  $("qScore").textContent = "正确 " + quiz.right + "　错误 " + quiz.wrong;
+  $("qBar").style.width = (quiz.idx / quiz.list.length * 100) + "%";
+  $("qStem").textContent = (q.type === "multi" ? "【多选】" : "") + q.stem;
+
+  const box = $("qOpts"); box.innerHTML = "";
+  quiz.order.forEach((origIdx, dispIdx) => {
+    const d = document.createElement("div");
+    d.className = "opt";
+    d.dataset.orig = origIdx;   // 记录该显示项对应的原始选项索引
+    d.innerHTML = `<div class="key">${LETTERS[dispIdx]}</div><div class="txt">${esc(q.opts[origIdx])}</div>`;
+    d.onclick = () => pick(d, origIdx);
+    box.appendChild(d);
+  });
+
+  const fb = $("qFb"); fb.className = "feedback"; fb.innerHTML = "";
+  $("btnSubmit").style.display = ""; $("btnNext").style.display = "none";
+  $("btnSkip").style.display = ""; $("btnDontKnow").style.display = "";
+  $("btnSubmit").disabled = true;
+  quiz.guessedMarked = false;   // 新题：重置"蒙的"标记
+}
+function pick(el, origIdx){
+  if(quiz.answered) return;
+  const q = quiz.cur;
+  if(q.type === "multi"){
+    const p = quiz.selected.indexOf(origIdx);
+    if(p >= 0){ quiz.selected.splice(p,1); el.classList.remove("sel"); }
+    else { quiz.selected.push(origIdx); el.classList.add("sel"); }
+  }else{
+    quiz.selected = [origIdx];
+    [...$("qOpts").children].forEach(c => c.classList.remove("sel"));
+    el.classList.add("sel");
+    $("btnSubmit").disabled = false;
+  }
+  $("btnSubmit").disabled = quiz.selected.length === 0;
+}
+function submitQ(){
+  if(quiz.answered || !quiz.selected.length) return;
+  quiz.answered = true;
+  const q = quiz.cur;
+  const sorted = a => [...a].sort((x,y)=>x-y).join(",");
+  const correct = sorted(quiz.selected) === sorted(q.answer);   // selected 存的是原始选项索引
+  updateStat(q.id, correct);
+  correct ? quiz.right++ : quiz.wrong++;
+
+  // 高亮：按"显示位置"标记（每个显示项记着它的原始索引 dataset.orig）
+  const dispOf = origIdx => quiz.order.indexOf(origIdx);   // 原始索引 -> 显示位置
+  [...$("qOpts").children].forEach(c => {
+    const oi = parseInt(c.dataset.orig, 10);
+    c.classList.add("locked");
+    if(q.answer.includes(oi)) c.classList.add("right");
+    else if(quiz.selected.includes(oi)) c.classList.add("wrong");
+  });
+  const fb = $("qFb");
+  fb.className = "feedback show " + (correct ? "ok" : "bad");
+  const s = getStat(q.id);
+  // 答案字母按"显示位置"给出，和学生看到的界面字母一致
+  const ansShown = q.answer.map(a => LETTERS[dispOf(a)]).sort().join("");
+  fb.innerHTML = (correct ? "✅ 回答正确" : "❌ 回答错误") +
+    `　正确答案：<b>${ansShown}</b>` +
+    `　当前掌握度：<b>${s.mastery}%</b>` +
+    (correct ? "" : `<br>该题已加入错题本，将按遗忘曲线在合适的时间再次推送给你。`);
+  // 答对时，给出"其实我是蒙的"入口：把该题按错题处理（诚实记录掌握度）
+  if(correct){
+    const guessBtn = document.createElement("button");
+    guessBtn.className = "btn ghost";
+    guessBtn.style = "margin-top:8px;padding:6px 14px;font-size:12.5px;border-color:var(--warn);color:var(--warn)";
+    guessBtn.textContent = "🙈 其实我是蒙的（打入错题本）";
+    guessBtn.onclick = () => markAsGuessed(q, guessBtn);
+    fb.appendChild(document.createElement("br"));
+    fb.appendChild(guessBtn);
+  }
+  $("btnSubmit").style.display = "none"; $("btnSkip").style.display = "none"; $("btnDontKnow").style.display = "none";
+  $("btnNext").style.display = "";
+  $("btnNext").textContent = (quiz.idx >= quiz.list.length - 1) ? "查看结果 →" : "下一题 →";
+  save();
+  saveProgress();   // 断点续做：提交后立即保存
+}
+function skipQ(){ quiz.answered = true; nextQ(); }
+
+/* 用户点了"不会"按钮：直接当答错处理（记入错题本），并展示答案 */
+function markDontKnow(){
+  if(quiz.answered) return;
+  quiz.answered = true;
+  const q = quiz.cur;
+  quiz.selected = [];                 // 没有选择
+  updateStat(q.id, false);            // 按答错处理
+  quiz.wrong++;
+  quiz.dontKnow = (quiz.dontKnow || 0) + 1;
+  // 高亮正确答案
+  const dispOf = origIdx => quiz.order.indexOf(origIdx);
+  [...$("qOpts").children].forEach(c => {
+    const oi = parseInt(c.dataset.orig, 10);
+    c.classList.add("locked");
+    if(q.answer.includes(oi)) c.classList.add("right");
+  });
+  const s = getStat(q.id);
+  const ansShown = q.answer.map(a => LETTERS[dispOf(a)]).sort().join("");
+  const fb = $("qFb");
+  fb.className = "feedback show bad";
+  fb.innerHTML = `🤔 已标记为"不会"　正确答案：<b>${ansShown}</b>　当前掌握度：<b>${s.mastery}%</b>` +
+    `<br>该题已加入错题本，将按遗忘曲线在合适的时间再次推送给你。`;
+  $("btnSubmit").style.display = "none"; $("btnSkip").style.display = "none"; $("btnDontKnow").style.display = "none";
+  $("btnNext").style.display = "";
+  $("btnNext").textContent = (quiz.idx >= quiz.list.length - 1) ? "查看结果 →" : "下一题 →";
+  save(); saveProgress();
+}
+
+/* 用户答对后点"其实我是蒙的"：把该题改判为未掌握（进错题本） */
+function markAsGuessed(q, btn){
+  if(quiz.guessedMarked) { toast("已经标记过了"); return; }
+  quiz.guessedMarked = true;
+  // 撤销刚才的"答对"记录，改按答错处理
+  const s = getStat(q.id);
+  s.right = Math.max(0, s.right - 1);
+  quiz.right = Math.max(0, quiz.right - 1);
+  updateStat(q.id, false);            // 记入错题本、掌握度按答错算
+  quiz.wrong++;
+  quiz.guessed = (quiz.guessed || 0) + 1;
+  btn.textContent = "✔ 已标记为蒙的（已入错题本）";
+  btn.disabled = true;
+  btn.style.borderColor = "var(--sub)"; btn.style.color = "var(--sub)";
+  $("qScore").textContent = "正确 " + quiz.right + "　错误 " + quiz.wrong;
+  toast("已计入错题本，后面会重点复习");
+  save(); saveProgress();
+}
+function nextQ(){
+  if(quiz.idx >= quiz.list.length - 1) return endQuiz();
+  quiz.idx++; showQ(); saveProgress();
+}
+function quitQuiz(){
+  if(confirm("确定退出本次练习？（下次打开可以继续）")){
+    $("quizCard").style.display="none"; $("setup").style.display="block";
+    clearProgress();
+  }
+}
+function endQuiz(){
+  $("quizCard").style.display = "none";
+  $("resultCard").style.display = "block";
+  clearProgress();   // 一轮做完，清掉断点，下次不再问
+  const tot = quiz.right + quiz.wrong;
+  $("rTotal").textContent = tot;
+  $("rRight").textContent = quiz.right;
+  $("rWrong").textContent = quiz.wrong;
+  $("rRate").textContent = tot ? Math.round(quiz.right / tot * 100) + "%" : "0%";
+  // 显示本轮"蒙的/不会"统计
+  const dk = quiz.dontKnow || 0, gs = quiz.guessed || 0;
+  const extra = $("rExtra");
+  if(extra){
+    if(dk + gs > 0){
+      extra.style.display = "";
+      extra.textContent = `其中：主动标记"不会" ${dk} 题，"蒙对后自报" ${gs} 题 —— 这些题已计入错题本，会被优先复习。`;
+    }else{
+      extra.style.display = "none";
+    }
+  }
+  if(tot > 0){
+    DB.hist.unshift({ts: Date.now(), mode: quiz.mode, total: tot, right: quiz.right});
+    DB.hist = DB.hist.slice(0, 50);
+    DB.days[todayKey()] = true;
+  }
+  save(); refreshWrong(); refreshReport();
+}
+
+/* ============================================================
+   五、UI —— 错题本
+   ============================================================ */
+function refreshWrong(){
+  const list = $("wrongList");
+  const items = DB.bank.filter(q => DB.wrong.includes(q.id));
+  $("wrongSummary").textContent = items.length ? `当前有 ${items.length} 道错题待巩固` : "暂无错题";
+  if(!items.length){ list.innerHTML = `<div class="empty"><div class="big">🎉</div>错题本是空的，继续保持！</div>`; return; }
+  list.innerHTML = "";
+  items.forEach(q => {
+    const s = getStat(q.id);
+    const div = document.createElement("div");
+    div.className = "wrongitem";
+    div.innerHTML = `
+      <div class="wi-head">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span class="qtype ${q.type}">${TYPE_NAME[q.type]}</span>
+          <span class="pill">📚 ${esc(q.bank||DEFAULT_BANK)}</span>
+          <span class="pill">${esc(q.kp)}</span>
+          <span class="tag bad">错 ${s.wrong} 次</span>
+          <span class="tag warn">掌握度 ${s.mastery}%</span>
+        </div>
+        <span class="pill">${s.lastWrongTs ? "上次答错 " + timeAgo(s.lastWrongTs) : ""}</span>
+      </div>
+      <div class="wi-stem">${esc(q.stem)}</div>
+      ${q.opts.map((o,i)=>`<div class="wi-line"><span class="tag ${q.answer.includes(i)?'ok':'bad'}">${LETTERS[i]}</span><span>${esc(o)}</span></div>`).join("")}
+      <div class="wi-line" style="color:var(--ok)"><b>正确答案：${q.answer.map(a=>LETTERS[a]).join("")}</b></div>`;
+    list.appendChild(div);
+  });
+}
+function timeAgo(ts){
+  const m = (Date.now() - ts) / 60000;
+  if(m < 1) return "刚刚";
+  if(m < 60) return Math.floor(m) + " 分钟前";
+  if(m < 1440) return Math.floor(m/60) + " 小时前";
+  return Math.floor(m/1440) + " 天前";
+}
+function clearWrong(){ if(!confirm("清空错题本？（掌握度数据保留）")) return; DB.wrong = []; save(); refreshWrong(); toast("错题本已清空"); }
+
+/* ============================================================
+   六、UI —— 学习报告
+   ============================================================ */
+function refreshReport(){
+  let tot = 0, right = 0;
+  Object.values(DB.stat).forEach(s => { tot += s.right + s.wrong; right += s.right; });
+  $("sTotal").textContent = tot;
+  $("sRate").textContent = tot ? Math.round(right/tot*100) + "%" : "0%";
+  $("sDays").textContent = Object.keys(DB.days).length;
+
+  // 知识点聚合
+  const kp = {};
+  DB.bank.forEach(q => {
+    const s = DB.stat[q.id]; if(!s || s.right + s.wrong === 0) return;
+    const k = q.kp || "未分类";
+    kp[k] = kp[k] || {n:0, r:0, w:0};
+    kp[k].n += s.right + s.wrong; kp[k].r += s.right; kp[k].w += s.wrong;
+  });
+  const rows = Object.entries(kp).map(([k,v]) => {
+    // 加权正确率：以最近趋势加权（简单起见用总正确率，答错重的知识点自然低）
+    const rate = v.n ? v.r / v.n : 0;
+    const mastery = Math.round(rate * 100);
+    return {k, ...v, mastery};
+  }).sort((a,b) => a.mastery - b.mastery);
+  $("sWeak").textContent = rows.length ? rows[0].k : "—";
+
+  const tb = $("kpTable").querySelector("tbody"); tb.innerHTML = "";
+  if(!rows.length) tb.innerHTML = `<tr><td colspan="6"><div class="empty">还没有答题数据，先去练几题吧</div></td></tr>`;
+  rows.forEach(r => {
+    const color = r.mastery >= 80 ? "var(--ok)" : r.mastery >= 60 ? "var(--warn)" : "var(--bad)";
+    const state = r.mastery >= 80 ? "掌握良好" : r.mastery >= 60 ? "基本掌握" : "薄弱";
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td><b>${esc(r.k)}</b></td><td>${r.n}</td><td>${r.r}</td>
+      <td style="color:${color};font-weight:700">${r.mastery}%</td>
+      <td><div class="mastery"><div class="f" style="width:${r.mastery}%;background:${color}"></div></div></td>
+      <td><span class="tag ${r.mastery>=80?'ok':r.mastery>=60?'warn':'bad'}">${state}</span></td>`;
+    tb.appendChild(tr);
+  });
+
+  const hb = $("histTable").querySelector("tbody"); hb.innerHTML = "";
+  if(!DB.hist.length) hb.innerHTML = `<tr><td colspan="4"><div class="empty">暂无练习记录</div></td></tr>`;
+  const MODE_NAME = {smart:"智能模式", seq:"顺序练习", rand:"随机练习", test:"模拟测试", wrong:"错题重刷"};
+  DB.hist.forEach(h => {
+    const d = new Date(h.ts);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${d.toLocaleString("zh-CN",{hour12:false})}</td><td>${MODE_NAME[h.mode]||h.mode}</td>
+      <td>${h.total}</td><td style="color:var(--gold);font-weight:700">${Math.round(h.right/h.total*100)}%</td>`;
+    hb.appendChild(tr);
+  });
+}
+
+/* ============================================================
+   七、导航 & 初始化
+   ============================================================ */
+function gotoPane(name){
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t.dataset.pane === name));
+  document.querySelectorAll(".pane").forEach(p => p.classList.toggle("on", p.id === "pane-" + name));
+  if(name === "bank") refreshBankUI();
+  if(name === "wrong") refreshWrong();
+  if(name === "report") refreshReport();
+}
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => gotoPane(t.dataset.pane));
+
+/* ---------- 演示题库 ---------- */
+const DEMO_BANK = `新文化运动兴起的标志是|严复翻译《天演论》|孙中山就任临时大总统|陈独秀创办《青年杂志》|李大钊发表《我的马克思主义观》|C|中国近现代史
+五四运动爆发于1919年|对|错|A|中国近现代史
+中国共产党第一次全国代表大会召开于1921年|对|错|A|中国近现代史
+下列属于洋务运动代表人物的是|康有为|张之洞|梁启超|严复|B|中国近现代史
+新文化运动的两大口号是|自强与求富|民主与科学|维新与变法|三民主义|B|中国近现代史
+西安事变发生于哪一年|1935年|1936年|1937年|1938年|B|中国近现代史
+下列关于辛亥革命历史意义的表述正确的有|推翻了清王朝统治|结束了君主专制制度|建立了民主共和制度|完成了反帝反封建任务|ABC|中国近现代史
+抗日战争全面爆发的标志是七七事变|对|错|A|中国近现代史
+中华人民共和国成立的时间是|1948年10月1日|1949年10月1日|1949年9月21日|1950年10月1日|B|中国近现代史
+改革开放开始于哪次会议|中共八大|十一届三中全会|中共十二大|中共十四大|B|中国近现代史
+鸦片战争是中国近代史的开端|对|错|A|中国近现代史
+《南京条约》签订于|1840年|1841年|1842年|1843年|C|中国近现代史
+洋务运动的口号是|民主与科学|自强、求富|师夷长技以制夷|扶清灭洋|B|中国近现代史
+戊戌变法又称|百日维新|新政运动|立宪运动|自强运动|A|中国近现代史
+下列属于新中国成立初期外交成就的有|提出和平共处五项原则|参加万隆会议|恢复联合国合法席位|签订《中苏友好同盟互助条约》|ABD|中国近现代史`;
+
+/* ---------- 断点续做：恢复上次未完成的练习 ---------- */
+function restoreProgress(){
+  const pr = readProgress();
+  if(!pr || !pr.list || !pr.list.length) return false;
+  // 用保存的题号去当前题库里找回原题（题库可能增删过，找不回的就跳过）
+  const byId = {};
+  DB.bank.forEach(q => { byId[q.id] = q; });
+  const list = pr.list.map(id => byId[id]).filter(Boolean);
+  if(!list.length || list.length < pr.list.length){
+    // 有题目已经不存在了（题库被删/清空），断点失效，丢弃
+    clearProgress(); return false;
+  }
+  const total = list.length;
+  const done = pr.idx;               // 已完成题数（当前是第 idx 题，0-based）
+  const modeName = {smart:"智能模式", seq:"顺序练习", rand:"随机练习", test:"模拟测试", wrong:"错题重刷"}[pr.mode] || pr.mode;
+  const ok = confirm(
+    "检测到上次有一轮练习没做完：\n\n" +
+    `　模式：${modeName}\n` +
+    `　进度：第 ${pr.idx + 1} / ${total} 题\n` +
+    `　已答对 ${pr.right} 题\n\n` +
+    "要【继续上次】吗？\n" +
+    "· 点「确定」→ 回到上次那道题，接着做\n" +
+    "· 点「取消」→ 重新选题库和模式开始"
+  );
+  if(!ok){ clearProgress(); return false; }   // 选否 → 回首页重来
+  // 选是 → 原样恢复
+  quiz = {
+    list, idx: pr.idx, right: pr.right, wrong: pr.wrong, mode: pr.mode,
+    cur: null, selected: pr.selected || [], answered: !!pr.answered,
+    order: pr.order || [], bankSel: pr.bank || "all", typeSel: pr.type || "all"
+  };
+  quiz.cur = quiz.list[quiz.idx];
+  gotoPane("prac");
+  // 恢复时不用 showQ 重新抽选项（会重打乱），直接按保存的 order 渲染
+  renderQFromState();
+  return true;
+}
+/* 按 quiz 当前状态渲染界面（用于恢复断点，选项顺序用 quiz.order） */
+function renderQFromState(){
+  $("setup").style.display = "none";
+  $("resultCard").style.display = "none";
+  $("quizCard").style.display = "block";
+  const q = quiz.cur;
+  $("qType").textContent = TYPE_NAME[q.type];
+  $("qType").className = "qtype " + q.type;
+  $("qPos").textContent = (quiz.idx + 1) + " / " + quiz.list.length;
+  $("qSource").textContent = q.kp ? "知识点：" + q.kp : "";
+  $("qScore").textContent = "正确 " + quiz.right + "　错误 " + quiz.wrong;
+  $("qBar").style.width = (quiz.idx / quiz.list.length * 100) + "%";
+  $("qStem").textContent = (q.type === "multi" ? "【多选】" : "") + q.stem;
+
+  const box = $("qOpts"); box.innerHTML = "";
+  quiz.order.forEach((origIdx, dispIdx) => {
+    const d = document.createElement("div");
+    d.className = "opt";
+    d.dataset.orig = origIdx;
+    d.innerHTML = `<div class="key">${LETTERS[dispIdx]}</div><div class="txt">${esc(q.opts[origIdx])}</div>`;
+    d.onclick = () => pick(d, origIdx);
+    if(quiz.selected.includes(origIdx)) d.classList.add("sel");
+    box.appendChild(d);
+  });
+
+  const fb = $("qFb");
+  if(quiz.answered){
+    // 该题已提交过：还原高亮与反馈
+    const sorted = a => [...a].sort((x,y)=>x-y).join(",");
+    const correct = sorted(quiz.selected) === sorted(q.answer);
+    [...box.children].forEach(c => {
+      const oi = parseInt(c.dataset.orig, 10);
+      c.classList.add("locked");
+      if(q.answer.includes(oi)) c.classList.add("right");
+      else if(quiz.selected.includes(oi)) c.classList.add("wrong");
+    });
+    const s = getStat(q.id);
+    const dispOf = o => quiz.order.indexOf(o);
+    const ansShown = q.answer.map(a => LETTERS[dispOf(a)]).sort().join("");
+    fb.className = "feedback show " + (correct ? "ok" : "bad");
+    fb.innerHTML = (correct ? "✅ 回答正确" : "❌ 回答错误") +
+      `　正确答案：<b>${ansShown}</b>　当前掌握度：<b>${s.mastery}%</b>`;
+    $("btnSubmit").style.display = "none"; $("btnSkip").style.display = "none"; $("btnDontKnow").style.display = "none";
+    $("btnNext").style.display = "";
+    $("btnNext").textContent = (quiz.idx >= quiz.list.length - 1) ? "查看结果 →" : "下一题 →";
+  }else{
+    fb.className = "feedback"; fb.innerHTML = "";
+    $("btnSubmit").style.display = ""; $("btnNext").style.display = "none";
+    $("btnSkip").style.display = ""; $("btnDontKnow").style.display = "";
+    $("btnSubmit").disabled = quiz.selected.length === 0;
+  }
+}
+
+/* ---------- 启动 ---------- */
+load();
+refreshBankUI(); refreshWrong(); refreshReport(); refreshBankSelects();
+// 检查是否有未完成的练习，有就询问是否继续
+if(!restoreProgress()){ /* 无断点或用户选择重来：停在刷题首页 */ }
+
+</script>
+</body>
+</html>
